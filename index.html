@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>永远粑粑多格式视频播放器</title>
-    <!-- 引入Video.js和HLS.js -->
     <link href="https://vjs.zencdn.net/7.21.4/video-js.css" rel="stylesheet">
     <script src="https://vjs.zencdn.net/7.21.4/video.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.14/dist/hls.min.js"></script>
@@ -79,7 +78,7 @@
     </style>
 </head>
 <body>
-    <h1>永远粑粑多格式视频播放器</h1>
+    <h1>永远爸爸多格式视频播放器</h1>
     <p class="subtitle">支持M3U8、MP4、MPD、WebP等多种格式的在线视频和本地视频。</p>
 
     <div id="videoContainer">
@@ -111,26 +110,41 @@
             preload: 'auto'
         });
 
+        // 初始化 HLS 实例（提前创建，避免只有点了演示视频才初始化）
+        let hls = null;
+        if (Hls.isSupported()) {
+            hls = new Hls();
+        }
+
         // 播放URL视频
         document.getElementById('playBtn').addEventListener('click', () => {
-            const url = document.getElementById('urlInput').value.trim();
+            let url = document.getElementById('urlInput').value.trim();
             if (!url) {
                 alert('请输入视频地址');
                 return;
             }
 
+            // 修复URL中的反斜杠问题（你之前遇到的 \ 错误）
+            url = url.replace(/\\/g, '/');
+
             // 处理HLS/M3U8
             if (url.includes('.m3u8') || url.includes('application/x-mpegURL')) {
-                if (Hls.isSupported()) {
-                    const hls = new Hls();
+                if (Hls.isSupported() && hls) {
+                    // 先卸载之前的加载
+                    hls.stopLoad();
+                    hls.detachMedia();
+                    // 加载新的视频
                     hls.loadSource(url);
                     hls.attachMedia(player.tech_.el_);
                     hls.on(Hls.Events.MANIFEST_PARSED, () => {
                         player.play();
                     });
                 } else if (player.tech_.el_.canPlayType('application/vnd.apple.mpegurl')) {
+                    // 苹果浏览器原生支持M3U8
                     player.src({ src: url, type: 'application/x-mpegURL' });
                     player.play();
+                } else {
+                    alert('你的浏览器不支持M3U8播放');
                 }
             } else {
                 // 普通视频格式
