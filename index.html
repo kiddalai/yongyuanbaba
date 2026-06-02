@@ -1,199 +1,209 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>永远粑粑多格式视频播放器</title>
-    <link href="https://vjs.zencdn.net/7.21.4/video-js.css" rel="stylesheet">
-    <script src="https://vjs.zencdn.net/7.21.4/video.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.14/dist/hls.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
-        body {
-            background-color: #1a1e35;
-            color: #fff;
-            padding: 20px;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        h1 {
-            text-align: center;
-            color: #4ecdc4;
-            margin-bottom: 10px;
-        }
-        .subtitle {
-            text-align: center;
-            color: #aaa;
-            margin-bottom: 20px;
-        }
-        #videoContainer {
-            background: #000;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-        #urlInput {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            background-color: #2563eb;
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        button:hover {
-            background-color: #1d4ed8;
-        }
-        #fileDropZone {
-            border: 2px dashed #4ecdc4;
-            border-radius: 8px;
-            padding: 30px;
-            text-align: center;
-            margin-bottom: 20px;
-            color: #aaa;
-        }
-        footer {
-            text-align: center;
-            color: #666;
-            font-size: 14px;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>多格式视频播放器-支持m3u8、MP4、MPD、TS、WebM在线&本地视频</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Video.js -->
+<link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet">
+<script src="https://vjs.zencdn.net/7.20.3/video.js"></script>
+
+<!-- HLS / DASH 解码插件 -->
+<script src="https://cdn.jsdelivr.net/npm/videojs-contrib-hls@latest/dist/videojs-contrib-hls.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/videojs-contrib-dash@latest/dist/videojs-contrib-dash.min.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    color: #fff;
+}
+.container {
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+}
+h1 {
+    text-align: center;    
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    background: linear-gradient(45deg, #3498db, #2ecc71);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.subtitle {
+    text-align: center;
+    color: #bdc3c7;
+    font-size: 1.2em;
+}
+.player-wrapper {
+    background: rgba(30,30,46,.9);
+    border-radius: 15px;
+    padding: 10px;
+}
+.video-js {
+    width: 100% !important; 
+    aspect-ratio: 16 / 9;
+    height: auto;
+    margin: 0 auto;
+    border-radius: 5px;
+    overflow: hidden;
+}
+.controls {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;    
+    padding: 10px;
+}
+input {
+    flex: 1;
+    min-width: 260px;
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+}
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background: #3498db;
+    color: #fff;
+    cursor: pointer;
+}
+button:hover {
+    background:#2980b9;
+}
+#drop-zone {
+    border: 2px dashed #3498db;
+    border-radius: 10px;
+    padding: 25px;
+    text-align: center;
+    margin-top: 15px;
+    cursor: pointer;
+}
+#drop-zone.dragover {
+    background: rgba(52,152,219,.2);
+}
+.video-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px,1fr));
+    gap: 15px;
+    margin-top: 20px;    
+    text-align: center;
+}
+.card {
+    background: rgba(30,30,46,.9);
+    border-radius: 10px;
+    padding: 15px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.card:hover {
+    transform: translateY(-4px);
+}
+footer {
+    text-align: center;
+    margin-top: 50px;
+    padding: 20px;
+    color: #7f8c8d;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+</style>
 </head>
 <body>
-    <h1>永远粑粑多格式视频播放器</h1>
-    <p class="subtitle">支持M3U8、MP4、MPD、WebP等多种格式的在线视频和本地视频。</p>
-
-    <div id="videoContainer">
-        <video id="myVideo" class="video-js vjs-big-play-centered" controls preload="auto" width="100%" height="500">
-            <p class="vjs-no-js">请启用JavaScript来观看视频。</p>
+<div class="container">
+    <h1>多格式视频播放器</h1>
+    <p class="subtitle">支持M3U8、MP4、MPD、TS、WebM等多种格式的在线视频和本地视频。</p>
+    <div class="player-wrapper">
+        <video
+            id="player"
+            class="video-js vjs-default-skin"
+            controls
+            preload="auto">
         </video>
+    <div class="controls">
+            <input id="video-url" placeholder="输入 M3U8 / MPD / MP4 / TS / WebM 地址">
+            <button id="play-btn">播放视频</button>
+            <button class="demo-link" data-url="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8">演示视频</button>
+    </div>      
+
+        <div id="drop-zone">
+            拖拽视频文件到此处，或点击选择
+            <input type="file" id="file-input" accept="video/mp4,video/webm,video/mp2t">
+        </div>
     </div>
+</div>
 
-    <input type="text" id="urlInput" placeholder="输入 M3U8 / MPD / MP4 / TS / WebM 地址">
-    <div class="button-group">
-        <button id="playBtn">播放视频</button>
-        <button id="demoBtn">演示视频</button>
-    </div>
+<footer>
+    <p>M3U8播放器 | 基于Video.js+contrib-hls/dash技术构建</p>
+    <p>仅供学习和演示使用</p>
+</footer>
+<script>
+const player = videojs('player');
 
-    <div id="fileDropZone">
-        拖拽视频文件到此处，或点击选择 <input type="file" id="fileInput" accept="video/*"> <span id="fileStatus">未选择任何文件</span>
-    </div>
+// 统一播放函数：通过链接后缀自动匹配MIME，解决跨域
+function playSource(url) {
+    let mime = '';
+    const lowUrl = url.toLowerCase();
+    if(lowUrl.includes('.m3u8')) mime = 'application/x-mpegURL';
+    else if(lowUrl.includes('.mpd')) mime = 'application/dash+xml';
+    else if(lowUrl.includes('.mp4')) mime = 'video/mp4';
+    else if(lowUrl.includes('.webm')) mime = 'video/webm';
+    else if(lowUrl.includes('.ts')) mime = 'video/MP2T';
 
-    <footer>
-        <p>M3U8播放器 | 基于Video.js和HLS.js技术构建</p>
-        <p>仅供学习和演示使用</p>
-    </footer>
+    if(mime){
+        player.src({src:url, type:mime});
+    }else{
+        player.src(url);
+    }
+    player.play().catch(err=>console.log('播放异常：',err));
+}
 
-    <script>
-        // 初始化播放器
-        const player = videojs('myVideo', {
-            autoplay: false,
-            controls: true,
-            preload: 'auto'
-        });
+// 播放按钮
+document.getElementById('play-btn').onclick = () => {
+    const val = document.getElementById('video-url').value.trim();
+    if(!val) return alert('请输入视频播放地址');
+    playSource(val);
+};
 
-        // 初始化 HLS 实例（提前创建，避免只有点了演示视频才初始化）
-        let hls = null;
-        if (Hls.isSupported()) {
-            hls = new Hls();
-        }
+// 演示按钮
+document.querySelectorAll('.demo-link').forEach(btn=>{
+    btn.onclick = ()=>{
+        const src = btn.dataset.url;
+        document.getElementById('video-url').value = src;
+        playSource(src);
+    }
+});
 
-        // 播放URL视频
-        document.getElementById('playBtn').addEventListener('click', () => {
-            let url = document.getElementById('urlInput').value.trim();
-            if (!url) {
-                alert('请输入视频地址');
-                return;
-            }
+/* 本地文件拖拽&选择 */
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+dropZone.onclick = ()=>fileInput.click();
 
-            // 修复URL中的反斜杠问题（你之前遇到的 \ 错误）
-            url = url.replace(/\\/g, '/');
+fileInput.onchange = e=>{
+    const file = e.target.files[0];
+    if(!file)return;
+    player.src({src:URL.createObjectURL(file), type:file.type});
+    player.play();
+};
 
-            // 处理HLS/M3U8
-            if (url.includes('.m3u8') || url.includes('application/x-mpegURL')) {
-                if (Hls.isSupported() && hls) {
-                    // 先卸载之前的加载
-                    hls.stopLoad();
-                    hls.detachMedia();
-                    // 加载新的视频
-                    hls.loadSource(url);
-                    hls.attachMedia(player.tech_.el_);
-                    hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                        player.play();
-                    });
-                } else if (player.tech_.el_.canPlayType('application/vnd.apple.mpegurl')) {
-                    // 苹果浏览器原生支持M3U8
-                    player.src({ src: url, type: 'application/x-mpegURL' });
-                    player.play();
-                } else {
-                    alert('你的浏览器不支持M3U8播放');
-                }
-            } else {
-                // 普通视频格式
-                player.src(url);
-                player.play();
-            }
-        });
-
-        // 演示视频
-        document.getElementById('demoBtn').addEventListener('click', () => {
-            document.getElementById('urlInput').value = 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4';
-            document.getElementById('playBtn').click();
-        });
-
-        // 本地文件播放
-        const fileInput = document.getElementById('fileInput');
-        const fileStatus = document.getElementById('fileStatus');
-        const dropZone = document.getElementById('fileDropZone');
-
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                fileStatus.textContent = file.name;
-                const url = URL.createObjectURL(file);
-                player.src(url);
-                player.play();
-            }
-        });
-
-        // 拖拽上传
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.style.backgroundColor = '#252a40';
-        });
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.style.backgroundColor = 'transparent';
-        });
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.style.backgroundColor = 'transparent';
-            const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith('video/')) {
-                fileInput.files = e.dataTransfer.files;
-                fileStatus.textContent = file.name;
-                const url = URL.createObjectURL(file);
-                player.src(url);
-                player.play();
-            }
-        });
-    </script>
+dropZone.ondragover = e=>{
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+};
+dropZone.ondragleave = ()=>dropZone.classList.remove('dragover');
+dropZone.ondrop = e=>{
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if(file){
+        player.src({src:URL.createObjectURL(file), type:file.type});
+        player.play();
+    }
+};
+</script>
 </body>
 </html>
