@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>多格式视频播放器-支持m3u8、MP4、MPD、TS、WebM在线&本地视频</title>
+<title>永远粑粑多格式视频播放器-支持m3u8、MP4、MPD、TS、WebM在线&本地视频</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <!-- Video.js -->
@@ -82,10 +82,15 @@ button:hover {
     padding: 25px;
     text-align: center;
     margin-top: 15px;
-    cursor: pointer;
 }
 #drop-zone.dragover {
     background: rgba(52,152,219,.2);
+}
+#selectBtn{
+    padding:6px 12px;
+    margin:0 8px;
+    background:#eee;
+    color:#222;
 }
 .video-list {
     display: grid;
@@ -111,11 +116,15 @@ footer {
     color: #7f8c8d;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
+/* 隐藏原生file输入框 */
+#file-input{
+    display:none;
+}
 </style>
 </head>
 <body>
 <div class="container">
-    <h1>多格式视频播放器</h1>
+    <h1>永远粑粑多格式视频播放器</h1>
     <p class="subtitle">支持M3U8、MP4、MPD、TS、WebM等多种格式的在线视频和本地视频。</p>
     <div class="player-wrapper">
         <video
@@ -132,6 +141,8 @@ footer {
 
         <div id="drop-zone">
             拖拽视频文件到此处，或点击选择
+            <button id="selectBtn">选择文件</button>
+            <span id="fileTip">未选择任何文件</span>
             <input type="file" id="file-input" accept="video/mp4,video/webm,video/mp2t">
         </div>
     </div>
@@ -143,6 +154,10 @@ footer {
 </footer>
 <script>
 const player = videojs('player');
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const selectBtn = document.getElementById('selectBtn');
+const fileTip = document.getElementById('fileTip');
 
 // 统一播放函数：通过链接后缀自动匹配MIME，解决跨域
 function playSource(url) {
@@ -178,18 +193,19 @@ document.querySelectorAll('.demo-link').forEach(btn=>{
     }
 });
 
-/* 本地文件拖拽&选择 */
-const dropZone = document.getElementById('drop-zone');
-const fileInput = document.getElementById('file-input');
-dropZone.onclick = ()=>fileInput.click();
+//【修复】仅按钮点击打开文件，取消外层div点击事件
+selectBtn.onclick = ()=>fileInput.click();
 
+// 选中本地文件
 fileInput.onchange = e=>{
     const file = e.target.files[0];
     if(!file)return;
+    fileTip.textContent = file.name; // 更新文件名
     player.src({src:URL.createObjectURL(file), type:file.type});
     player.play();
 };
 
+// 拖拽逻辑保留
 dropZone.ondragover = e=>{
     e.preventDefault();
     dropZone.classList.add('dragover');
@@ -200,6 +216,7 @@ dropZone.ondrop = e=>{
     dropZone.classList.remove('dragover');
     const file = e.dataTransfer.files[0];
     if(file){
+        fileTip.textContent = file.name;
         player.src({src:URL.createObjectURL(file), type:file.type});
         player.play();
     }
